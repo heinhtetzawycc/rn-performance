@@ -1,74 +1,14 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import {useRenderCount, useWhyDidYouUpdate} from "@/services/performance/PerformanceMetrics";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import {useRenderCount,} from "@/services/performance/PerformanceMetrics";
 
-
-// ANTI-PATTERN 4: Component without React.memo that always re-renders
-
-const HeavyComponent = ({ index }: {index: number}) => {
-
-    // Track renders - you'll see this logs EVERY time any item renders
-    useRenderCount(`HeavyComponent-${index}`);
-    useWhyDidYouUpdate(`HeavyComponent-${index}`, { index });
-
-
-    const start = performance.now();
-
-    while (performance.now() - start < 10) {}
-
-
-
-// ANTI-PATTERN 5: Inline styles (new object every render)
-
-    return (
-
-        <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: '#ccc' }}>
-
-            <Text>Item #{index} (Heavy)</Text>
-
-            {/* ANTI-PATTERN 6: Unoptimized images */}
-
-            <Image
-
-                source={{ uri: `https://picsum.photos/200/200?random=${index}` }}
-
-                style={{ width: 200, height: 200 }}
-
-                // Missing: resizeMode, no caching strategy
-
-            />
-
-        </View>
-
-    );
-
-};
-
-
+import {MemoizedCardItem} from "@/components/CardItem";
+import { MemoizedStatusDisplay } from '@/components/StatusDisplay';
 
 // ANTI-PATTERN 7: Component that re-renders due to inline object props
 
-const StatDisplay = ({ stats }:{stats: any}) => {
 
-    // Track renders - you'll see this logs EVERY time any item renders
-    useRenderCount('StatDisplay');
-    useWhyDidYouUpdate('StatDisplay', { stats });
-
-
-    return (
-
-        <View style={styles.statsContainer}>
-
-            <Text>Count: {stats.count}</Text>
-
-            <Text>Items: {stats.total}</Text>
-
-        </View>
-
-    );
-
-};
 
 
 
@@ -77,10 +17,11 @@ export default function JankLab() {
 
     const [count, setCount] = useState(0);
 
-    const [items, setItems] = useState(Array.from({ length: 50 }, (_, i) => i));
+    const [items, setItems] = useState(Array.from({length: 50}, (_, i) => i));
 
     const [filter, setFilter] = useState('');
 
+    // const renderItem = useCallback(({index}: {index: number}) => (<CardItem index = {index} />), []);
 
 
 // ANTI-PATTERN 2: Unnecessary array spread
@@ -88,22 +29,20 @@ export default function JankLab() {
     const listData = [...items];
 
 
-
 // ANTI-PATTERN 8: Expensive filter operation without useMemo
 
     const filteredItems = listData.filter(item =>
 
         item.toString().includes(filter)
-
     );
-
 
 
 // ANTI-PATTERN 9: Inline object creation (new reference every render)
 
-    const stats = { count, total: items.length };
+    const stats = {count, total: items.length};
 
 
+    const renderItem = useCallback(({item}: { item: number }) => (<MemoizedCardItem index={item}/>), []);
 
     return (
 
@@ -112,11 +51,9 @@ export default function JankLab() {
             <Text style={styles.title}>Performance Practice Lab</Text>
 
 
-
             {/* This causes StatDisplay to re-render unnecessarily */}
 
-            <StatDisplay stats={stats} />
-
+            <MemoizedStatusDisplay stats={stats}/>
 
 
             <TouchableOpacity
@@ -130,7 +67,6 @@ export default function JankLab() {
                 <Text style={styles.buttonText}>Trigger Re-render: {count}</Text>
 
             </TouchableOpacity>
-
 
 
             <TouchableOpacity
@@ -148,14 +84,13 @@ export default function JankLab() {
             </TouchableOpacity>
 
 
-
             <FlatList
 
                 data={filteredItems}
 
                 keyExtractor={(item) => item.toString()}
 
-                renderItem={({ item }) => <HeavyComponent index={item} />}
+                renderItem={renderItem}
 
                 // Missing optimization props:
 
@@ -189,6 +124,6 @@ const styles = StyleSheet.create({
 
     item: { padding: 20, borderBottomWidth: 1, borderBottomColor: '#ccc' },
 
-    statsContainer: { padding: 10, backgroundColor: '#f0f0f0', marginBottom: 10 }
+
 
 });

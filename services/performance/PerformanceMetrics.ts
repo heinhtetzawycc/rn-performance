@@ -1,6 +1,15 @@
 import { useEffect, useRef } from 'react';
 
+
+// Green,\x1b[32m
+// Red,\x1b[31m
+// Yellow,\x1b[33m
+// Blue,\x1b[34m
+// Cyan,\x1b[36m
+// Bold,\x1b[1m
+// Reset,\x1b[0m
 const RED = '\x1b[31m';
+const GREEN = '\x1b[32m';
 const BLUE = '\x1b[34m';
 const RESET = '\x1b[0m';
 const BOLD = '\x1b[1m';
@@ -8,16 +17,13 @@ const BOLD = '\x1b[1m';
 /**
  * Logs and returns how many times a component has rendered.
  */
-export const useRenderCount = (componentName: string): number => {
+export const useRenderCount = (componentName: string) => {
     const renderCount = useRef<number>(0);
-
     // Note: No dependency array means this runs on EVERY render
     useEffect(() => {
         renderCount.current += 1;
-        console.debug(`${componentName} rendered ${renderCount.current} times`);
+        console.debug(`${BLUE}${componentName} ${GREEN}rendered ${RED}${renderCount.current} ${GREEN}times`);
     });
-
-    return renderCount.current;
 };
 
 /**
@@ -35,6 +41,7 @@ export const useWhyDidYouUpdate = <T extends Record<string, any>>(
         if (previousProps.current) {
             // Get all keys from both previous and current props
             const allKeys = Object.keys({ ...previousProps.current, ...props });
+            console.log(allKeys);
             const changedProps: Record<string, { from: any; to: any }> = {};
 
             allKeys.forEach((key) => {
