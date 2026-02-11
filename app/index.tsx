@@ -21,9 +21,6 @@ export default function JankLab() {
 
     const [filter, setFilter] = useState('');
 
-    // const renderItem = useCallback(({index}: {index: number}) => (<CardItem index = {index} />), []);
-
-
 // ANTI-PATTERN 2: Unnecessary array spread
 
     const listData = [...items];
@@ -43,7 +40,13 @@ export default function JankLab() {
 
 
     const renderItem = useCallback(({item}: { item: number }) => (<MemoizedCardItem index={item}/>), []);
-
+    const keyExtractor = useCallback(( item: number ) => item.toString(), []);
+  
+    const getItemLayout = useCallback((data: any, index: number) => ({
+    length: 61,
+    offset: 61 * index,
+    index,
+  }), []);
     return (
 
         <View style={styles.container}>
@@ -87,8 +90,9 @@ export default function JankLab() {
             <FlatList
 
                 data={filteredItems}
-
-                keyExtractor={(item) => item.toString()}
+// keyExtractor={(item) => item.toString()}
+                keyExtractor={keyExtractor}
+                getItemLayout={getItemLayout}
 
                 renderItem={renderItem}
 
