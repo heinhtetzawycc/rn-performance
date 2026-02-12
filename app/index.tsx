@@ -21,6 +21,8 @@ export default function JankLab() {
 
   const [items, setItems] = useState(Array.from({ length: 50 }, (_, i) => i));
   const [filter, setFilter] = useState("");
+
+  
   
   // ANTI-PATTERN 2: Unnecessary array spread : FIXED
   // const listData = [...items];
@@ -31,8 +33,12 @@ export default function JankLab() {
         [items, filter]
     );
 
-  // ANTI-PATTERN 9: Inline object creation (new reference every render)
-  const stats = { count, total: items.length };
+  // ANTI-PATTERN 9: Inline object creation (new reference every render) : FIXED
+  const stats = useMemo(() => ({count, total: items.length}), [count, items.length]);
+    const handleIncrement = useCallback(() => setCount(prev => prev + 1), []);
+    const handleAddItem = useCallback(() => {
+        setItems(prevItems => [...prevItems, prevItems.length]);
+    }, []);
 
   const renderItem = useCallback(
     ({ item }: { item: number }) => <MemoizedCardItem index={item} />,
@@ -58,14 +64,14 @@ export default function JankLab() {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => setCount((prev) => prev + 1)}
+        onPress={handleIncrement}
       >
         <Text style={styles.buttonText}>Trigger Re-render: {count}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => setItems([...items, items.length])}
+        onPress={handleAddItem}
       >
         <Text style={styles.buttonText}>Add Item</Text>
       </TouchableOpacity>
