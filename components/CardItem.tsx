@@ -24,9 +24,9 @@ const CardItem = ({ index }: { index: number }) => {
   useRenderCount(`HeavyComponent-${index}`);
   useWhyDidYouUpdate(`HeavyComponent-${index}`, { index });
 
-  const start = performance.now();
+  // const start = performance.now();
 
-  while (performance.now() - start < 10) {}
+  // while (performance.now() - start < 10) {}
 
   const imageSource = React.useMemo(
     () => ({
