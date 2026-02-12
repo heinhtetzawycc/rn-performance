@@ -22,17 +22,18 @@ export default function JankLab() {
   const [items, setItems] = useState(Array.from({ length: 50 }, (_, i) => i));
   const [filter, setFilter] = useState("");
   
-  // ANTI-PATTERN 2: Unnecessary array spread
-  const listData = [...items];
+  // ANTI-PATTERN 2: Unnecessary array spread : FIXED
+  // const listData = [...items];
 
-  // ANTI-PATTERN 8: Expensive filter operation without useMemo
-  const filteredItems = listData.filter((item) =>
-    item.toString().includes(filter),
-  );
+  // ANTI-PATTERN 8: Expensive filter operation without useMemo : FIXED
+    const filteredItems = useMemo(
+        () => items.filter(item => item.toString().includes(filter)),
+        [items, filter]
+    );
 
   // ANTI-PATTERN 9: Inline object creation (new reference every render)
   const stats = { count, total: items.length };
-  
+
   const renderItem = useCallback(
     ({ item }: { item: number }) => <MemoizedCardItem index={item} />,
     [],
