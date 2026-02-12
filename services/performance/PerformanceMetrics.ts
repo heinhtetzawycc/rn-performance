@@ -13,14 +13,15 @@ const GREEN = '\x1b[32m';
 const BLUE = '\x1b[34m';
 const RESET = '\x1b[0m';
 const BOLD = '\x1b[1m';
+const ENABLE_PERF_DEBUG = false;
 
 /**
  * Logs and returns how many times a component has rendered.
  */
 export const useRenderCount = (componentName: string) => {
     const renderCount = useRef<number>(0);
-    // Note: No dependency array means this runs on EVERY render
     useEffect(() => {
+        if (!ENABLE_PERF_DEBUG) return;
         renderCount.current += 1;
         console.debug(`${BLUE}${componentName} ${GREEN}rendered ${RED}${renderCount.current} ${GREEN}times`);
     });
@@ -38,10 +39,10 @@ export const useWhyDidYouUpdate = <T extends Record<string, any>>(
     const previousProps = useRef<T | undefined>(undefined);
 
     useEffect(() => {
+        if (!ENABLE_PERF_DEBUG) return;
         if (previousProps.current) {
             // Get all keys from both previous and current props
             const allKeys = Object.keys({ ...previousProps.current, ...props });
-            console.log(allKeys);
             const changedProps: Record<string, { from: any; to: any }> = {};
 
             allKeys.forEach((key) => {

@@ -1,133 +1,102 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from "react";
 
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import {useRenderCount,} from "@/services/performance/PerformanceMetrics";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { useRenderCount } from "@/services/performance/PerformanceMetrics";
 
-import {MemoizedCardItem} from "@/components/CardItem";
-import { MemoizedStatusDisplay } from '@/components/StatusDisplay';
+import { CARD_ITEM_HEIGHT, MemoizedCardItem } from "@/components/CardItem";
+import { MemoizedStatusDisplay } from "@/components/StatusDisplay";
 
 // ANTI-PATTERN 7: Component that re-renders due to inline object props
 
-
-
-
-
 export default function JankLab() {
-    useRenderCount('JankLab');
+  useRenderCount("JankLab");
 
-    const [count, setCount] = useState(0);
+  const [count, setCount] = useState(0);
 
-    const [items, setItems] = useState(Array.from({length: 50}, (_, i) => i));
-
-    const [filter, setFilter] = useState('');
-
-// ANTI-PATTERN 2: Unnecessary array spread
-
-    const listData = [...items];
-
-
-// ANTI-PATTERN 8: Expensive filter operation without useMemo
-
-    const filteredItems = listData.filter(item =>
-
-        item.toString().includes(filter)
-    );
-
-
-// ANTI-PATTERN 9: Inline object creation (new reference every render)
-
-    const stats = {count, total: items.length};
-
-
-    const renderItem = useCallback(({item}: { item: number }) => (<MemoizedCardItem index={item}/>), []);
-    const keyExtractor = useCallback(( item: number ) => item.toString(), []);
+  const [items, setItems] = useState(Array.from({ length: 50 }, (_, i) => i));
+  const [filter, setFilter] = useState("");
   
-    const getItemLayout = useCallback((data: any, index: number) => ({
-    length: 61,
-    offset: 61 * index,
-    index,
-  }), []);
-    return (
+  // ANTI-PATTERN 2: Unnecessary array spread
+  const listData = [...items];
 
-        <View style={styles.container}>
+  // ANTI-PATTERN 8: Expensive filter operation without useMemo
+  const filteredItems = listData.filter((item) =>
+    item.toString().includes(filter),
+  );
 
-            <Text style={styles.title}>Performance Practice Lab</Text>
+  // ANTI-PATTERN 9: Inline object creation (new reference every render)
+  const stats = { count, total: items.length };
+  
+  const renderItem = useCallback(
+    ({ item }: { item: number }) => <MemoizedCardItem index={item} />,
+    [],
+  );
+  const keyExtractor = useCallback((item: number) => item.toString(), []);
 
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: CARD_ITEM_HEIGHT,
+      offset: CARD_ITEM_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Performance Practice Lab</Text>
 
-            {/* This causes StatDisplay to re-render unnecessarily */}
+      {/* This causes StatDisplay to re-render unnecessarily */}
 
-            <MemoizedStatusDisplay stats={stats}/>
+      <MemoizedStatusDisplay stats={stats} />
 
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => setCount((prev) => prev + 1)}
+      >
+        <Text style={styles.buttonText}>Trigger Re-render: {count}</Text>
+      </TouchableOpacity>
 
-            <TouchableOpacity
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => setItems([...items, items.length])}
+      >
+        <Text style={styles.buttonText}>Add Item</Text>
+      </TouchableOpacity>
 
-                style={styles.button}
-
-                onPress={() => setCount(prev => prev + 1)}
-
-            >
-
-                <Text style={styles.buttonText}>Trigger Re-render: {count}</Text>
-
-            </TouchableOpacity>
-
-
-            <TouchableOpacity
-
-                style={styles.button}
-
-                // ANTI-PATTERN 10: Inline arrow function in onPress
-
-                onPress={() => setItems([...items, items.length])}
-
-            >
-
-                <Text style={styles.buttonText}>Add Item</Text>
-
-            </TouchableOpacity>
-
-
-            <FlatList
-
-                data={filteredItems}
-// keyExtractor={(item) => item.toString()}
-                keyExtractor={keyExtractor}
-                getItemLayout={getItemLayout}
-
-                renderItem={renderItem}
-
-                // Missing optimization props:
-
-                // removeClippedSubviews
-
-                // maxToRenderPerBatch
-
-                // windowSize
-
-                // getItemLayout
-
-            />
-
-        </View>
-
-    );
-
+      <FlatList
+        data={items}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
+        renderItem={renderItem}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={6}
+        updateCellsBatchingPeriod={50}
+        windowSize={5}
+        initialNumToRender={6}
+      />
+    </View>
+  );
 }
 
-
-
 const styles = StyleSheet.create({
+  container: { flex: 1, paddingTop: 50, paddingHorizontal: 20 },
 
-    container: { flex: 1, paddingTop: 50, paddingHorizontal: 20 },
+  title: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
 
-    title: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
+  button: {
+    backgroundColor: "#007AFF",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
 
-    button: { backgroundColor: '#007AFF', padding: 15, borderRadius: 8, marginBottom: 10 },
+  buttonText: { color: "white", textAlign: "center" },
 
-    buttonText: { color: 'white', textAlign: 'center' },
-
-    item: { padding: 20, borderBottomWidth: 1, borderBottomColor: '#ccc' },
-
-
-
+  item: { padding: 20, borderBottomWidth: 1, borderBottomColor: "#ccc" },
 });

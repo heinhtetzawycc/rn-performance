@@ -1,49 +1,73 @@
-import {useRenderCount, useWhyDidYouUpdate} from "@/services/performance/PerformanceMetrics";
-import {Image, StyleSheet, Text, View} from "react-native";
+import {
+  useRenderCount,
+  useWhyDidYouUpdate,
+} from "@/services/performance/PerformanceMetrics";
+import { StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
 import React from "react";
 
-const CardItem = ({ index }: {index: number}) => {
+const CARD_PADDING_VERTICAL = 20;
+const CARD_TITLE_LINE_HEIGHT = 20;
+const CARD_TITLE_MARGIN_BOTTOM = 8;
+const CARD_IMAGE_HEIGHT = 200;
+const CARD_BORDER_WIDTH = 1;
 
-    // Track renders - you'll see this logs EVERY time any item renders
-    useRenderCount(`HeavyComponent-${index}`);
-    useWhyDidYouUpdate(`HeavyComponent-${index}`, { index });
+export const CARD_ITEM_HEIGHT =
+  CARD_PADDING_VERTICAL * 2 +
+  CARD_TITLE_LINE_HEIGHT +
+  CARD_TITLE_MARGIN_BOTTOM +
+  CARD_IMAGE_HEIGHT +
+  CARD_BORDER_WIDTH;
 
+const CardItem = ({ index }: { index: number }) => {
+  // Track renders - you'll see this logs EVERY time any item renders
+  useRenderCount(`HeavyComponent-${index}`);
+  useWhyDidYouUpdate(`HeavyComponent-${index}`, { index });
 
-    const start = performance.now();
+  const start = performance.now();
 
-    while (performance.now() - start < 10) {}
+  while (performance.now() - start < 10) {}
 
+  const imageSource = React.useMemo(
+    () => ({
+      uri: `https://picsum.photos/200/200?random=${index}`,
+      cacheKey: `card-item-${index}`,
+    }),
+    [index],
+  );
 
+  // ANTI-PATTERN 5: Inline styles (new object every render) : : FIXED
 
-// ANTI-PATTERN 5: Inline styles (new object every render)
+  return (
+    <View style={styles.cardContainer}>
+      <Text style={styles.title}>Item #{index} (Heavy)</Text>
 
-    return (
+      {/* ANTI-PATTERN 6: Unoptimized images : FIXED */}
 
-        <View style={styles.cardContainer}>
-
-            <Text>Item #{index} (Heavy)</Text>
-
-            {/* ANTI-PATTERN 6: Unoptimized images */}
-
-            <Image
-
-                source={{ uri: `https://picsum.photos/200/200?random=${index}` }}
-
-                style={styles.imageStyle}
-
-                // Missing: resizeMode, no caching strategy
-
-            />
-
-        </View>
-
-    );
-
+      <Image
+        source={imageSource}
+        style={styles.imageStyle}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        recyclingKey={`card-item-${index}`}
+        transition={0}
+      />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    cardContainer: {padding: 20, borderBottomWidth: 1, borderBottomColor: '#ccc' },
-    imageStyle: { width: 200, height: 200 }
+  cardContainer: {
+    paddingVertical: CARD_PADDING_VERTICAL,
+    paddingHorizontal: 20,
+    borderBottomWidth: CARD_BORDER_WIDTH,
+    borderBottomColor: "#ccc",
+  },
+  title: {
+    lineHeight: CARD_TITLE_LINE_HEIGHT,
+    marginBottom: CARD_TITLE_MARGIN_BOTTOM,
+  },
+  imageStyle: { width: 200, height: CARD_IMAGE_HEIGHT },
 });
 
 export const MemoizedCardItem = React.memo(CardItem);
